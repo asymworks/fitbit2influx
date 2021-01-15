@@ -34,71 +34,62 @@ def get_user_profile(app):
     return api_get(app, '/1/user/-/profile.json')
 
 
-def get_heartrate(app, start='today', end='1d', detail='1min'):
+def get_heartrate(app, since='today', detail='1min'):
     '''
     Get Heart Rate Data
 
     This calls the Fitbit Heart Rate Intraday Time Series endpoint with the
-    parameters taken from argument values. The `start` parameter specifies
-    the start date for the measurement or can contain the string `today`, and
-    the `end` parameter specifies the end date for the measurement or the
-    string `1d`, which will retreive the whole day of data.
+    parameters taken from argument values. The `since` parameter specifies
+    the starting date and time for the measurement or can contain the string
+    `today`, which will return all points from today.
     
-    If the `start` and `end` parameters are both `datetime.datetime` instances,
-    the time values will be used to further constrain the data. Note that the
-    `datetime.datetime` instances will be interpreted as user-local time by 
-    Fitbit and no timezone data is passed, so the instances should be naive 
-    objects without timezone data.
+    Note that the Fitbit API only returns intraday data within a single day,
+    so this method will send multiple requests for each day of data from the
+    `since` parameter until today.  If the `since` parameter is a `datetime`
+    object, the time will also be used to filter out points before the time
+    given. Note that the `datetime` instances will be interpreted as user-local
+    time by Fitbit and no timezone data is passed, so the instances should be 
+    naive objects without timezone data.
 
     The return value is an array of (`dt`, `bpm`) tuples where the `dt` value
-    is a `datetime.datetime` object in the Fitbit-local time zone and `bpm` is
-    the heart rate in beats per minute.
+    is a naive `datetime` object in the Fitbit-local time zone and `bpm` is the
+    heart rate in beats per minute.
     '''
-    s_date = start
-    e_date = end
-    i_time = None
-    if isinstance(start, datetime.datetime) and isinstance(end, datetime.datetime):
-        s_date = start.strftime('%Y-%m-%d')
-        e_date = end.strftime('%Y-%m-%d')
-        i_time = (
-            start.strftime('%H:%M'),
-            end.strftime('%H:%M')
-        )
+    today = datetime.date.today()
+    f_date = datetime.date.today()
+    f_time = datetime.datetime.now().replace(
+        hour=0, minute=0, second=0, microsecond=0,
+    )
 
-    if isinstance(s_date, datetime.date):
-        s_date = start.strftime('%Y-%m-%d')
-    if isinstance(e_date, datetime.date):
-        e_date = end.strftime('%Y-%m-%d')
+    if isinstance(since, datetime.datetime):
+        f_date = since.date()
+        f_time = since
 
-    if not isinstance(s_date, str):
-        raise TypeError('Start date must be a string, date, or datetime object')
-    if not isinstance(e_date, str):
-        raise TypeError('End date must be a string, date, or datetime object')
+    elif isinstance(since, datetime.date):
+        f_date = since
+        f_time = datetime.datetime.combine(since, datetime.time())
 
-    time_spec = f'date/{s_date}/{e_date}/{detail}'
-    if i_time is not None:
-        time_spec += f'/time/{i_time[0]}/{i_time[1]}'
-
-    endpoint = f'/1/user/-/activities/heart/{time_spec}.json'
-    hr_data = api_get(app, endpoint)
-
-    # Determine the start date of the data
-    start_date = datetime.datetime.strptime(hr_data['activities-heart'][0]['dateTime'], '%Y-%m-%d')
-
-    # Process returned intra-day data and set UTC timestamps
+    # Fetch day by day through today
     ret_data = []
-    last_secs = 0
-    offset_days = 0
-    for pt in hr_data['activities-heart-intraday']['dataset']:
-        h, m, s = [int(x) for x in pt['time'].split(':')]
-        secs = h * 3600 + m * 60 + s
+    while f_date <= today:
+        hr_endpoint = f'date/{f_date.strftime("%Y-%m-%d")}/1d/{detail}.json'
+        hr_data = api_get(app, f'/1/user/-/activities/heart/{hr_endpoint}')
 
-        # Detect a rollover to the next day
-        if secs < last_secs:
-            offset_days += 1
+        if 'activities-heart-intraday' not in hr_data:
+            raise ApiError(
+                f'Did not receive intraday heart rate data from {hr_endpoint}'
+            )
 
-        # Save the point with a Python datetime
-        offset = datetime.timedelta(days=offset_days, seconds=secs)
-        ret_data.append((start_date + offset, pt['value']))
+        # Convert Fitbit hh:mm:ss tags to datetime objects
+        for pt in hr_data['activities-heart-intraday']['dataset']:
+            h, m, s = [int(x) for x in pt['time'].split(':')]
+            dt = datetime.datetime.combine(f_date, datetime.time(h, m, s))
 
+            if dt >= f_time:
+                ret_data.append((dt, pt['value']))
+
+        # Increment the Fetch Day
+        f_date += datetime.timedelta(days=1)
+
+    # Return fetched data
     return ret_data

@@ -98,23 +98,10 @@ def import_data():
             last_pt = shelf['last_point']
 
     # Load heart rate data
-    # TODO: Move this day counting logic into get_heartrate()
-    today = datetime.date.today()
-    fetch_day = last_pt.date()
-    hr_data = []
-    while fetch_day <= today:
-        hr_data += get_heartrate(current_app, fetch_day)
-        fetch_day += datetime.timedelta(days=1)
-
-    # Filter for new data points
-    if last_pt:
-        new_pts = [pt for pt in hr_data if pt[0] > last_pt]
-        if not len(new_pts):
-            current_app.logger.info('No new heart rate points to send to InfluxDB')
-            return
-
-    else:
-        new_pts = hr_data
+    hr_data = get_heartrate(current_app, last_pt or 'today')
+    if not len(hr_data):
+        current_app.logger.info('No new heart rate points to send to InfluxDB')
+        return
 
     # Insert new data points
     json_pts = [
@@ -125,7 +112,7 @@ def import_data():
                 'bpm': pt[1],
             },
         }
-        for pt in new_pts
+        for pt in hr_data
     ]
 
     ret = influx.client.write_points(
@@ -141,9 +128,9 @@ def import_data():
         current_app.logger.error('Failed to write data to Influx')
 
     # Save last retrieved data point
-    current_app.logger.info(f'Inserting {len(new_pts)} new heart rate points')
+    current_app.logger.info(f'Inserting {len(hr_data)} new heart rate points')
     with shelve.open(current_app.config['SHELVE_FILENAME'], 'c') as shelf:
-        shelf['last_point'] = new_pts[-1][0]
+        shelf['last_point'] = hr_data[-1][0]
 
 
 def init_app(app):

@@ -87,7 +87,7 @@ def create_app(app_config=None, app_name=None):
         influx.init_app(app)
 
         # Register Blueprints
-        from . import oauth
+        from .blueprints import oauth
         app.register_blueprint(oauth.bp)
 
         # Initialize Import Scheduler and start. Note that Flask Debug mode
