@@ -77,9 +77,6 @@ def create_app(app_config=None, app_name=None):
         app.name = app_name
 
     try:
-        # Initialize CLI
-        from . import cli
-        cli.init_app(app)
         
         # Initialize OAuth2
         from .service import oauth as oauth_service
