@@ -97,8 +97,14 @@ def import_data():
         if 'last_point' in shelf:
             last_pt = shelf['last_point']
 
-    # Load today's heart rate data
-    hr_data = get_heartrate(current_app)
+    # Load heart rate data
+    # TODO: Move this day counting logic into get_heartrate()
+    today = datetime.date.today()
+    fetch_day = last_pt.date()
+    hr_data = []
+    while fetch_day <= today:
+        hr_data += get_heartrate(current_app, fetch_day)
+        fetch_day += datetime.timedelta(days=1)
 
     # Filter for new data points
     if last_pt:
