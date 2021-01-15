@@ -77,13 +77,30 @@ def create_app(app_config=None, app_name=None):
         app.name = app_name
 
     try:
+        # Initialize CLI
+        from . import cli
+        cli.init_app(app)
+        
+        # Initialize OAuth2
+        from .service import oauth as oauth_service
+        oauth_service.init_oauth(app)
+
+        # Initialize InfluxDB
+        from . import influx
+        influx.init_app(app)
+
         # Register Blueprints
         from . import oauth
         app.register_blueprint(oauth.bp)
 
-        # Initialize OAuth2
-        from .service import oauth as oauth_service
-        oauth_service.init_oauth(app)
+        # Initialize Import Scheduler and start. Note that Flask Debug mode
+        # causes this to run twice, so the check ensures that the scheduler
+        # is only set up in the Werkzeug main worker thread.
+        is_dev = app.debug or os.environ.get('FLASK_ENV') == 'development'
+        if not is_dev or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+            from . import scheduler
+            scheduler.init_app(app)
+            scheduler.scheduler.start()
 
         # Return Application
         return app

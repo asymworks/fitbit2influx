@@ -49,3 +49,10 @@ def oauth_debug():
         }
 
     return oauth_data
+
+
+@bp.route('/test', methods=['GET'])
+def oauth_test():
+    '''Print User Profile'''
+    from .service.fitbit import get_user_profile
+    return get_user_profile(current_app)

@@ -1,10 +1,7 @@
 export FLASK_APP := fitbit2influx.factory
 
-shell serve db-init db-migrate db-upgrade db-downgrade : export FLASK_ENV := development
+shell serve update : export FLASK_ENV := development
 coverage coverage-html coverage-report test test-wip test-x : export FLASK_ENV := production
-
-shell-psql serve-psql export : export FLASK_ENV := development
-shell-psql serve-psql export : export JADETREE_CONFIG := ../config/dev-docker.py
 
 coverage :
 	poetry run coverage run --source=jadetree -m pytest tests
@@ -14,18 +11,6 @@ coverage-html :
 
 coverage-report :
 	poetry run coverage report -m
-
-db-init :
-	poetry run flask db init
-
-db-migrate :
-	poetry run flask db migrate
-
-db-upgrade :
-	poetry run flask db upgrade
-
-db-downgrade :
-	poetry run flask db downgrade
 
 lint :
 	poetry run flake8
@@ -51,8 +36,10 @@ test-x :
 test-wip :
 	poetry run python -m pytest tests -m wip
 
+update : 
+	poetry run flask update
+
 all: serve
 
 .PHONY: coverage coverage-html coverage-report \
-	db-init db-migrate db-upgrade db-downgrade \
-	lint shell serve test test-wip test-x
+	lint shell serve test test-wip test-x update

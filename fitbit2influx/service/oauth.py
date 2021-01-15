@@ -61,6 +61,8 @@ def init_oauth(app):
         ('https', auth_url_host, auth_url_path, None, auth_url_args, None)
     )
 
+    app.logger.info('Fitbit OAuth2 Initialized')
+
 
 def update_tokens(app, token_data):
     '''Update the ShelveDB with the Token Data'''
@@ -82,6 +84,7 @@ def update_tokens(app, token_data):
 
 def request_tokens(app, code):
     '''Request new OAuth2 Tokens for the Application'''
+    app.logger.info('Requesting OAuth2 access and refresh tokens')
     url_host = app.config['FITBIT_API_HOST']
     url_path = '/oauth2/token'
     response = requests.post(
@@ -99,6 +102,7 @@ def request_tokens(app, code):
     if 'success' in data and not data['success']:
         raise ApiError.from_response(data)
 
+    app.logger.info('Successfully authenticated with Fitbit')
     update_tokens(app, data)
 
 
@@ -111,7 +115,8 @@ def refresh_tokens(app):
     
     if refresh_token is None:
         raise NeedAuthError('No Refresh Token set')
-    
+
+    app.logger.info('Refreshing OAuth2 access token')
     url_host = app.config['FITBIT_API_HOST']
     url_path = '/oauth2/token'
     response = requests.post(
@@ -128,4 +133,32 @@ def refresh_tokens(app):
     if 'success' in data and not data['success']:
         raise ApiError.from_response(data)
 
+    app.logger.info('Successfully refreshed OAuth2 access token')
     update_tokens(app, data)
+
+    return data['access_token']
+
+
+def get_api_token(app):
+    '''
+    Get the current API Bearer Token
+
+    Returns the current token to be sent as a Bearer Token for an authenticated
+    API request. If the token is expired, the refresh flow will be called and a
+    new token will be provided.
+    '''
+    access_token = None
+    expire_time = None
+    with shelve.open(app.config['SHELVE_FILENAME'], 'r') as shelf:
+        access_token = shelf.get('access_token', None)
+        expire_time = shelf.get('expires', None)
+
+    if access_token is None or expire_time is None:
+        raise NeedAuthError('No Access Token set')
+
+    if expire_time - datetime.datetime.utcnow() < datetime.timedelta(seconds=1):
+        app.logger.debug('Access token expired - refreshing')
+        return refresh_tokens(app)
+
+    app.logger.debug('Using cached access token')
+    return access_token
