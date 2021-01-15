@@ -10,11 +10,11 @@ RUN python -m venv venv \
   && venv/bin/pip install -r requirements.txt \
   && venv/bin/pip install gunicorn
 
-COPY fitbit2influx fitbit2influx
-COPY docker/* ./
-COPY pyproject.toml ./
+COPY --chown=fb2i:fb2i fitbit2influx fitbit2influx
+COPY --chown=fb2i:fb2i docker/* ./
+COPY --chown=fb2i:fb2i pyproject.toml ./
 RUN mkdir -p /var/lib/fb2i \
-  && chown -R fb2i:fb2i /var/lib/fb2i ./ \
+  && chown -R fb2i:fb2i /var/lib/fb2i \
   && chmod +x docker-entry.sh
 
 USER fb2i
