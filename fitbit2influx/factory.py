@@ -28,6 +28,7 @@ def read_version():
 
     return (None, None)
 
+
 def create_app(app_config=None, app_name=None):
     '''
     Create and Configure the Application with the Flask `Application Factory`_
@@ -77,7 +78,7 @@ def create_app(app_config=None, app_name=None):
         app.name = app_name
 
     try:
-        
+
         # Initialize OAuth2
         from .service import oauth as oauth_service
         oauth_service.init_oauth(app)
@@ -87,8 +88,10 @@ def create_app(app_config=None, app_name=None):
         influx.init_app(app)
 
         # Register Blueprints
-        from .blueprints import oauth
+        from .blueprints import oauth, status
         app.register_blueprint(oauth.bp)
+        app.register_blueprint(status.bp)
+        app.logger.info('Registered Blueprints')
 
         # Initialize Import Scheduler and start. Note that Flask Debug mode
         # causes this to run twice, so the check ensures that the scheduler

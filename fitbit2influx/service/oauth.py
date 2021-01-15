@@ -11,8 +11,8 @@ from fitbit2influx.error import ApiError, ConfigError, NeedAuthError
 
 def init_oauth(app):
     '''
-    Construct the Fitbit Authorization URL 
-    
+    Construct the Fitbit Authorization URL
+
     Construct the URL for Fitbit OAuth2 Authorization Code grants based on
     application configuration and store the URL back in the application config.
     '''
@@ -66,7 +66,8 @@ def init_oauth(app):
 
 def update_tokens(app, token_data):
     '''Update the ShelveDB with the Token Data'''
-    for k in ('access_token', 'refresh_token', 'expires_in', 'scope', 'user_id'):
+    keys = ('access_token', 'refresh_token', 'expires_in', 'scope', 'user_id')
+    for k in keys:
         if k not in token_data:
             raise ApiError(f'Token request response did not include "{k}"')
 
@@ -112,7 +113,7 @@ def refresh_tokens(app):
     with shelve.open(app.config['SHELVE_FILENAME'], 'r') as shelf:
         if 'refresh_token' in shelf:
             refresh_token = shelf['refresh_token']
-    
+
     if refresh_token is None:
         raise NeedAuthError('No Refresh Token set')
 
@@ -156,7 +157,8 @@ def get_api_token(app):
     if access_token is None or expire_time is None:
         raise NeedAuthError('No Access Token set')
 
-    if expire_time - datetime.datetime.utcnow() < datetime.timedelta(seconds=1):
+    expire_left = expire_time - datetime.datetime.utcnow()
+    if expire_left < datetime.timedelta(seconds=1):
         app.logger.debug('Access token expired - refreshing')
         return refresh_tokens(app)
 

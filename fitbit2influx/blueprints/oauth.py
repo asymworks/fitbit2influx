@@ -1,5 +1,4 @@
 # Fitbit2Influx OAuth2 Helpers
-import shelve
 
 from flask import Blueprint, current_app, redirect, request
 
@@ -33,26 +32,3 @@ def oauth_refresh():
         return redirect('/debug')
     except NeedAuthError:
         return redirect('/authorize')
-
-
-@bp.route('/debug', methods=['GET'])
-def oauth_debug():
-    '''Print OAuth2 Information'''
-    oauth_data = {}
-    with shelve.open(current_app.config['SHELVE_FILENAME'], 'r') as shelf:
-        oauth_data = {
-            'access_token': shelf['access_token'],
-            'refresh_token': shelf['refresh_token'],
-            'scope': shelf['scope'],
-            'expires': shelf['expires'].isoformat(),
-            'user_id': shelf['user_id'],
-        }
-
-    return oauth_data
-
-
-@bp.route('/test', methods=['GET'])
-def oauth_test():
-    '''Print User Profile'''
-    from .service.fitbit import get_user_profile
-    return get_user_profile(current_app)

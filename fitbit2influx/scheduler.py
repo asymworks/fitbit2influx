@@ -23,7 +23,10 @@ class APScheduler(object):
         '''Register the extension with the application'''
         self.app = app
         self.app.apscheduler = self
-        self.app.logger.debug(f'Registering APScheduler with {self._scheduler.__class__.__name__} worker')
+        self.app.logger.debug(
+            'Registering APScheduler with '
+            f'{self._scheduler.__class__.__name__} worker'
+        )
 
     @property
     def running(self):
@@ -56,7 +59,7 @@ class APScheduler(object):
         @scheduler.with_appcontext
         def run_every_minute():
             current_app.logger.info('Called run_every_minute()')
-        
+
         ```
         '''
         def wrapper(func):
@@ -74,8 +77,6 @@ class APScheduler(object):
         self.app.logger.info('Starting Scheduler')
         self._scheduler.start(paused=paused)
 
-# TODO: Evaluate replacing with gevent Scheduler when deployed with gunicorn
-#       using a gevent worker.
 
 #: Fitbit2Influx Import Scheduler
 scheduler = APScheduler()
@@ -89,7 +90,9 @@ def import_data():
 
     # Get the User Profile
     profile = get_user_profile(current_app)
-    utc_offset = datetime.timedelta(milliseconds=profile['user']['offsetFromUTCMillis'])
+    utc_offset = datetime.timedelta(
+        milliseconds=profile['user']['offsetFromUTCMillis']
+    )
 
     # Try and look up the last inserted timestamp
     last_pt = None
@@ -131,6 +134,7 @@ def import_data():
     current_app.logger.info(f'Inserting {len(hr_data)} new heart rate points')
     with shelve.open(current_app.config['SHELVE_FILENAME'], 'c') as shelf:
         shelf['last_point'] = hr_data[-1][0]
+        shelf['last_count'] = len(hr_data)
 
 
 def init_app(app):

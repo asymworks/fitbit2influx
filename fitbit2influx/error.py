@@ -5,7 +5,9 @@ class Error(Exception):
     default_code = 500
 
     def __init__(self, *args, **kwargs):
-        self.status_code = kwargs.pop('status_code', self.__class__.default_code)
+        self.status_code = kwargs.pop(
+            'status_code', self.__class__.default_code
+        )
         super(Error, self).__init__(*args, **kwargs)
 
 
@@ -54,7 +56,8 @@ class ApiError(Error):
             return ApiError(f'{err_msg} ({err_type})')
 
         errs = '\n'.join([
-            f'{e.get("message", "[no message]")} ({e.get("errorType", "unknown")})'
+            f'{e.get("message", "[no message]")} '
+            f'({e.get("errorType", "unknown")})'
             for e in json['errors']
         ])
         return ApiError(f'Multiple API Errors: {errs}')

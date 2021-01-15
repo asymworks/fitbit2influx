@@ -32,6 +32,7 @@ class InfluxDB(object):
     def client(self):
         return self._client
 
+
 #: InfluxDB Client
 influx = InfluxDB()
 

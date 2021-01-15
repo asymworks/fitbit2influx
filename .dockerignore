@@ -1,0 +1,15 @@
+# Ignore .git
+.git
+
+# Ignore Test and Coverage Outputs
+.htmlcov
+.coverage
+tests/.pytest*
+
+# Ignore Databases
+*.db
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

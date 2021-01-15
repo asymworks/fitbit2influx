@@ -1,7 +1,6 @@
 # Fitbit2Influx Fitbit Service
 
 import datetime
-from typing import Type
 import requests
 
 from urllib.parse import quote, urlencode, urlunparse
@@ -9,6 +8,7 @@ from urllib.parse import quote, urlencode, urlunparse
 from fitbit2influx.error import ApiError
 
 from .oauth import get_api_token
+
 
 def api_get(app, url_endpoint, query=None, headers={}, **kwargs):
     '''Perform a GET request to the Fitbit API'''
@@ -42,13 +42,13 @@ def get_heartrate(app, since='today', detail='1min'):
     parameters taken from argument values. The `since` parameter specifies
     the starting date and time for the measurement or can contain the string
     `today`, which will return all points from today.
-    
+
     Note that the Fitbit API only returns intraday data within a single day,
     so this method will send multiple requests for each day of data from the
     `since` parameter until today.  If the `since` parameter is a `datetime`
     object, the time will also be used to filter out points before the time
     given. Note that the `datetime` instances will be interpreted as user-local
-    time by Fitbit and no timezone data is passed, so the instances should be 
+    time by Fitbit and no timezone data is passed, so the instances should be
     naive objects without timezone data.
 
     The return value is an array of (`dt`, `bpm`) tuples where the `dt` value

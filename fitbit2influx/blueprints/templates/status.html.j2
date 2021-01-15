@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css">
+    <title>Fitbit2Influx | Status</title>
+  </head>
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">Fitbit2Influx Status</h1>
+        <table class="table">
+          <tr>
+            <th>Fitbit API Status</td>
+            <td>{% if token_expires %}Connected{% else %}Disconnected{% endif %}</td>
+          </tr>
+          <tr>
+            <th>Fitbit Token Expires</th>
+            <td>{{ token_expires }}</td>
+          </tr>
+          <tr>
+            <th>Fitbit User Id</th>
+            <td>{{ user_id }}</td>
+          </tr>
+          <tr>
+            <th>Influx URI</th>
+            <td>{{ influx_uri }}</td>
+          </tr>
+          <tr>
+            <th>Influx Database</th>
+            <td>{{ influx_db }}</td>
+          </tr>
+          <tr>
+            <th>Scheduler Status</th>
+            <td>{% if scheduler.running %}Running{% else %}Stopped{% endif %}</td>
+          </tr>
+          <tr>
+            <th>Last Imported Point</th>
+            <td>{{ last_time }}</td>
+          <tr>
+          <tr>
+            <th>Last Import Size</th>
+            <td>{{ last_count }}</td>
+          </tr>
+        </table>
+      </div>
+    </section>
+  </body>
+</html>

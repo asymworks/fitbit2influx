@@ -14,4 +14,4 @@ CALLBACK_URL = '/authorize'
 TOKEN_VALIDITY = 604800
 
 # ShelveDB Settings
-SHELVE_FILENAME = 'shelf.db'
+SHELVE_FILENAME = 'instance/shelf.db'
